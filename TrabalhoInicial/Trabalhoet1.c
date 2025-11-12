@@ -22,6 +22,40 @@ typedef struct {
     char ComandoString[100];
 } PacoteComando;
 
+int ehNumeroValido(const char *str) {
+    if (str == NULL || *str == '\0') {
+        return 0; // String nula ou vazia
+    }
+
+    int pontoEncontrado = 0; // 0 = não, 1 = sim
+
+    for (int i = 0; str[i] != '\0'; i++) {
+        // Se for um dígito, é válido, continue
+        if (isdigit((unsigned char)str[i])) {
+            continue;
+        }
+
+        // Se for um ponto
+        if (str[i] == '.') {
+            if (pontoEncontrado) {
+                return 0; // Encontrou um segundo ponto
+            }
+            pontoEncontrado = 1; // Marca que encontrou o primeiro ponto
+        }
+        // Se não for dígito nem ponto
+        else {
+            return 0; // Caractere inválido (ex: 'a', '-', ' ')
+        }
+    }
+    
+    // Caso especial: a string é SÓ "."
+    if (strcmp(str, ".") == 0) {
+        return 0;
+    }
+
+    return 1; // Passou por tudo, é um número válido
+}
+
 
 
 void MenuDispositivo(ComandoDispositivo *cmd, PacoteComando *pacote)
@@ -66,6 +100,11 @@ void MenuDispositivo(ComandoDispositivo *cmd, PacoteComando *pacote)
     printf("Digite o numero do dispositivo: ");
     fgets(pacote->num, sizeof(pacote->num), stdin);
     strtok(pacote->num, "\n"); // Remover o caractere de nova linha
+    if (ehNumeroValido(pacote->num) == 0) {
+        printf("Erro: O numero do dispositivo deve ser numerico!\n");
+        cmd->status = 0; // Marca o comando como inválido
+    }
+    
 
 
 }
@@ -96,8 +135,16 @@ void MenuComandos(ComandoDispositivo *cmd, PacoteComando *pacote)
             printf("Digite o valor: ");
             fgets(pacote->valor, sizeof(pacote->valor), stdin);
             strtok(pacote->num, "\n"); // Remover o caractere de nova linha
-            cmd->status_valor = 1; // Comando usa valor
+            //Validação do valor
+            if (ehNumeroValido(pacote->valor) == 0) {
+                printf("Erro: Valor invalido! Deve ser um numero (ex: 1.25).\n");
+                cmd->status = 0;
+            } else {
+                printf("Comando registrado com sucesso!\n");
+                cmd->status_valor = 1; // Comando usa valor
+            }
             break;
+            
         case 2:
             strcpy(pacote->comando, "SET_ESTADO");
             printf("Comando registrado com sucesso!\n");
@@ -105,7 +152,18 @@ void MenuComandos(ComandoDispositivo *cmd, PacoteComando *pacote)
             printf("Digite o valor (0 -> Desligado ou 1 -> Ligado): ");
             fgets(pacote->valor, sizeof(pacote->valor), stdin);
             strtok(pacote->num, "\n"); // Remover o caractere de nova linha
-            cmd->status_valor = 1; // Comando usa valor
+            //Validação do valor
+            if (ehNumeroValido(pacote->valor) == 0) {
+                printf("Erro: Valor invalido! Deve ser 0 ou 1.\n");
+                cmd->status = 0;
+            } else if (strcmp(pacote->valor, "0") != 0 && strcmp(pacote->valor, "1") != 0) {
+                // É um número válido (ex: "5" ou "1.2"), mas não é "0" nem "1"
+                printf("Erro: Valor invalido! Deve ser 0 ou 1.\n");
+                cmd->status = 0;
+            } else {
+                printf("Comando registrado com sucesso!\n");
+                cmd->status_valor = 1; // Comando usa valor
+            }
             break;
         case 3:
             strcpy(pacote->comando, "LER_DADO");
